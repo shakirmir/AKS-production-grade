@@ -74,11 +74,24 @@ stages:
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
                       # Wait for pods to be ready
                       kubectl wait --for=condition=ready pod -l app=aks-practice-app,version=green -n production --timeout=300s
+                      # Diagnostic checks
+                      echo "=== Pod Status ==="
+                      kubectl get pods -n production -l app=aks-practice-app
+                      echo "=== Service Endpoints ==="
+                      kubectl get endpoints aks-practice-app -n production
+                      echo "=== Ingress Status ==="
+                      kubectl get ingress aks-practice-app -n production
+                      echo "=== AGIC Pod Status ==="
+                      kubectl get pods -n azure-arc -l app=agic
                       # Get Application Gateway public IP for smoke test
                       APPGW_IP=$(az network application-gateway show -g $(resourceGroupName) -n aksprac-agw --query "frontendIPConfigurations[0].publicIPAddress.id" -o tsv | xargs -I {} az network public-ip show --ids {} --query "ipAddress" -o tsv)
-                      # Wait for AGIC to propagate configuration (longer wait for 502 issues)
+                      echo "=== Testing Application Gateway at $APPGW_IP ==="
+                      # Wait for AGIC to propagate configuration
                       echo "Waiting for AGIC to configure Application Gateway..."
                       sleep 60
+                      # Check if backend pool is configured
+                      echo "=== Application Gateway Backend Health ==="
+                      az network application-gateway show-backend-health -g $(resourceGroupName) -n aksprac-agw
                       # Retry health check with better error handling
                       for i in {1..5}; do
                         echo "Attempt $i: Testing health endpoint..."
