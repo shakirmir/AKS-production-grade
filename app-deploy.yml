@@ -72,11 +72,25 @@ stages:
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+                      # Wait for pods to be ready
+                      kubectl wait --for=condition=ready pod -l app=aks-practice-app,version=green -n production --timeout=300s
                       # Get Application Gateway public IP for smoke test
                       APPGW_IP=$(az network application-gateway show -g $(resourceGroupName) -n aksprac-agw --query "frontendIPConfigurations[0].publicIPAddress.id" -o tsv | xargs -I {} az network public-ip show --ids {} --query "ipAddress" -o tsv)
-                      # Wait for ingress to propagate
-                      sleep 30
-                      curl -fsS "http://$APPGW_IP/healthz"
+                      # Wait for AGIC to propagate configuration (longer wait for 502 issues)
+                      echo "Waiting for AGIC to configure Application Gateway..."
+                      sleep 60
+                      # Retry health check with better error handling
+                      for i in {1..5}; do
+                        echo "Attempt $i: Testing health endpoint..."
+                        if curl -fsS "http://$APPGW_IP/healthz"; then
+                          echo "Health check passed!"
+                          exit 0
+                        fi
+                        echo "Health check failed, waiting 10s before retry..."
+                        sleep 10
+                      done
+                      echo "Health check failed after 5 attempts"
+                      exit 1
 
   - stage: SwapToGreen
     displayName: Swap traffic to green
