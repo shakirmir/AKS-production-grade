@@ -1,15 +1,16 @@
 replicaCount: 2
 version: blue
 image:
-  repository: REPLACE_ME_ACR_LOGIN_SERVER/aks-practice-app
+  repository: akspracacru3zgda.azurecr.io/aks-practice-app
   tag: latest
 autoscaling:
   enabled: false
 service:
   selectorVersion: blue
 secretProvider:
-  tenantId: REPLACE_ME_TENANT_ID
-  keyVaultName: REPLACE_ME_KEY_VAULT_NAME
+  enabled: false
+  tenantId: c7d7fabe-6c6d-4fe6-85dc-141d6a150cec
+  keyVaultName: aksprackvsuc3yj
   secretName: tls-cert
 ingress:
   enabled: true
