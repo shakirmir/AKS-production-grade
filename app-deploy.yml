@@ -117,7 +117,7 @@ stages:
                       # Retry health check with better error handling
                       for i in {1..5}; do
                         echo "Attempt $i: Testing health endpoint..."
-                        if curl -fsS "http://$INGRESS_IP/healthz" --max-time 10; then
+                        if curl -fsS "http://$INGRESS_IP/healthz" -H "Host: prod.example.internal" --max-time 10; then
                           echo "Health check passed!"
                           exit 0
                         fi
