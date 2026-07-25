@@ -1,0 +1,118 @@
+trigger: none
+pr: none
+
+variables:
+  - group: aks-practice-vars
+
+stages:
+  - stage: Build
+    displayName: Build and push image
+    jobs:
+      - job: BuildImage
+        pool:
+          vmImage: ubuntu-22.04
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name $(acrName)
+                docker build -t $(acrLoginServer)/aks-practice-app:$(Build.BuildId) app
+                docker push $(acrLoginServer)/aks-practice-app:$(Build.BuildId)
+
+  - stage: DeployUAT
+    displayName: Deploy to UAT
+    dependsOn: Build
+    jobs:
+      - deployment: DeployUAT
+        environment: uat-approval
+        pool:
+          vmImage: ubuntu-22.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+
+  - stage: DeployProdGreen
+    displayName: Deploy green to production
+    dependsOn: DeployUAT
+    jobs:
+      - deployment: DeployProdGreen
+        environment: prod-approval
+        pool:
+          vmImage: ubuntu-22.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+                      bash scripts/smoke-test.sh production localhost
+
+  - stage: SwapToGreen
+    displayName: Swap traffic to green
+    dependsOn: DeployProdGreen
+    jobs:
+      - deployment: SwapToGreen
+        environment: prod-swap-approval
+        pool:
+          vmImage: ubuntu-22.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      kubectl -n production patch service aks-practice-app --type='json' -p='[{"op": "replace", "path": "/spec/selector/version", "value": "green"}]'
+
+  - stage: RollbackToBlue
+    displayName: Rollback to blue
+    dependsOn: []
+    jobs:
+      - deployment: Rollback
+        environment: prod-rollback
+        pool:
+          vmImage: ubuntu-22.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      kubectl -n production patch service aks-practice-app --type='json' -p='[{"op": "replace", "path": "/spec/selector/version", "value": "blue"}]'
