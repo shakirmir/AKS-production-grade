@@ -1,0 +1,162 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: aks-practice-vars
+
+stages:
+  - stage: TerraformPlan
+    jobs:
+      - job: Plan
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                cd infra
+                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
+                terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -out=tfplan
+
+  - stage: TerraformApply
+    dependsOn: TerraformPlan
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: Apply
+        environment: infra-approval
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      cd infra
+                      terraform apply tfplan
+
+  - stage: Build
+    dependsOn: TerraformApply
+    jobs:
+      - job: BuildImage
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name $(acrName)
+                docker build -t $(acrLoginServer)/aks-practice-app:$(Build.BuildId) app
+                docker push $(acrLoginServer)/aks-practice-app:$(Build.BuildId)
+
+  - stage: DeployUAT
+    dependsOn: Build
+    jobs:
+      - deployment: DeployUAT
+        environment: uat-approval
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+
+  - stage: DeployProdGreen
+    dependsOn: DeployUAT
+    jobs:
+      - deployment: DeployProdGreen
+        environment: prod-approval
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+                      bash scripts/smoke-test.sh production localhost
+
+  - stage: SwapToGreen
+    dependsOn: DeployProdGreen
+    jobs:
+      - deployment: SwapToGreen
+        environment: prod-swap-approval
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      kubectl -n production patch service aks-practice-app --type='json' -p='[{"op": "replace", "path": "/spec/selector/version", "value": "green"}]'
+
+  - stage: RollbackToBlue
+    dependsOn: []
+    jobs:
+      - deployment: Rollback
+        environment: prod-rollback
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      kubectl -n production patch service aks-practice-app --type='json' -p='[{"op": "replace", "path": "/spec/selector/version", "value": "blue"}]'

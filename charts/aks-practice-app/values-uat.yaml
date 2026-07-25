@@ -1,0 +1,17 @@
+replicaCount: 2
+version: blue
+image:
+  repository: REPLACE_ME_ACR_LOGIN_SERVER/aks-practice-app
+  tag: latest
+service:
+  selectorVersion: blue
+secretProvider:
+  tenantId: REPLACE_ME_TENANT_ID
+  keyVaultName: REPLACE_ME_KEY_VAULT_NAME
+  secretName: tls-cert
+ingress:
+  enabled: true
+  host: uat.example.internal
+  tlsSecretName: tls-secret
+rbac:
+  groupObjectId: REPLACE_ME_GROUP_OBJECT_ID

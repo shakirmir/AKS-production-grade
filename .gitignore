@@ -1,0 +1,14 @@
+# Terraform state and local artifacts
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+
+# Local shell outputs
+*.log
+*.out
+
+# OS/editor noise
+.DS_Store
+.vscode/
