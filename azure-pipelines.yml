@@ -36,7 +36,7 @@ stages:
                 terraform -version
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
-                terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -out=tfplan
+                terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -var="create_rbac_role_assignments=false" -out=tfplan
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: 'infra/tfplan'

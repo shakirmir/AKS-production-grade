@@ -41,12 +41,16 @@ module "aks" {
 }
 
 resource "azurerm_role_assignment" "acr_pull" {
+  count = var.create_rbac_role_assignments ? 1 : 0
+
   scope                = module.acr.registry_id
   role_definition_name = "AcrPull"
   principal_id         = module.aks.kubelet_identity_object_id
 }
 
 resource "azurerm_role_assignment" "appgw_contributor" {
+  count = var.create_rbac_role_assignments ? 1 : 0
+
   scope                = module.appgateway.application_gateway_id
   role_definition_name = "Contributor"
   principal_id         = module.aks.cluster_identity_principal_id

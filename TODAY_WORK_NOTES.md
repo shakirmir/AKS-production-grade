@@ -18,6 +18,7 @@
 - The pipeline now successfully installs Terraform and initializes all provider plugins
 - `RollbackToBlue` is intentionally manual and uses the `prod-rollback` environment
 - The service principal must have sufficient Azure permissions to create role assignments
+- RBAC role assignments are now opt-in via `create_rbac_role_assignments`, so the initial Terraform apply can proceed without elevated `User Access Administrator` or `Owner` permissions
 
 ## Next steps
 1. Re-run the Azure DevOps pipeline
