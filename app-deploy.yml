@@ -82,7 +82,7 @@ stages:
                       echo "=== Ingress Status ==="
                       kubectl get ingress aks-practice-app -n production
                       echo "=== AGIC Extension Status ==="
-                      az k8s-extension show --name agic --cluster-name $(aksClusterName) --resource-group $(resourceGroupName) --cluster-type managedClusters
+                      az k8s-extension show --name agic --cluster-name $(aksClusterName) --resource-group $(resourceGroupName) --cluster-type managedClusters 2>/dev/null || echo "AGIC extension not found - this is the root cause of 502 errors"
                       echo "=== AGIC Pod Status (checking all namespaces) ==="
                       kubectl get pods -A -l app=agic || echo "AGIC pods not found with label app=agic"
                       # Get Application Gateway public IP for smoke test
