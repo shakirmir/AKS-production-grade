@@ -48,6 +48,12 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      # Deploy NGINX ingress controller
+                      helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+                      helm repo update
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"=false
+                      # Wait for NGINX ingress controller to be ready
+                      kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
 
   - stage: DeployProdGreen
@@ -71,6 +77,12 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      # Deploy NGINX ingress controller
+                      helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+                      helm repo update
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"=false
+                      # Wait for NGINX ingress controller to be ready
+                      kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
                       # Wait for pods to be ready
                       kubectl wait --for=condition=ready pod -l app=aks-practice-app,version=green -n production --timeout=300s
@@ -81,27 +93,25 @@ stages:
                       kubectl get endpoints aks-practice-app -n production
                       echo "=== Ingress Status ==="
                       kubectl get ingress aks-practice-app -n production
-                      echo "=== AGIC Extension Status ==="
-                      az k8s-extension show --name agic --cluster-name $(aksClusterName) --resource-group $(resourceGroupName) --cluster-type managedClusters 2>/dev/null || echo "AGIC extension not found - this is the root cause of 502 errors"
-                      echo "=== AGIC Pod Status (checking all namespaces) ==="
-                      kubectl get pods -A -l app=agic || echo "AGIC pods not found with label app=agic"
-                      # Get Application Gateway public IP for smoke test
-                      APPGW_IP=$(az network application-gateway show -g $(resourceGroupName) -n aksprac-agw --query "frontendIPConfigurations[0].publicIPAddress.id" -o tsv | xargs -I {} az network public-ip show --ids {} --query "ipAddress" -o tsv)
-                      echo "=== Testing Application Gateway at $APPGW_IP ==="
-                      # Wait for AGIC to propagate configuration
-                      echo "Waiting for AGIC to configure Application Gateway..."
-                      sleep 90
+                      echo "=== NGINX Ingress Controller Status ==="
+                      kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
+                      # Get NGINX ingress controller LoadBalancer IP for smoke test
+                      INGRESS_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                      echo "=== Testing NGINX Ingress at $INGRESS_IP ==="
+                      # Wait for ingress to propagate
+                      echo "Waiting for ingress to propagate..."
+                      sleep 30
                       # Retry health check with better error handling
-                      for i in {1..10}; do
+                      for i in {1..5}; do
                         echo "Attempt $i: Testing health endpoint..."
-                        if curl -fsS "http://$APPGW_IP/healthz"; then
+                        if curl -fsS "http://$INGRESS_IP/healthz" -H "Host: prod.example.internal"; then
                           echo "Health check passed!"
                           exit 0
                         fi
-                        echo "Health check failed, waiting 15s before retry..."
-                        sleep 15
+                        echo "Health check failed, waiting 10s before retry..."
+                        sleep 10
                       done
-                      echo "Health check failed after 10 attempts"
+                      echo "Health check failed after 5 attempts"
                       exit 1
 
   - stage: SwapToGreen

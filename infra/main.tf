@@ -56,7 +56,6 @@ resource "azurerm_role_assignment" "appgw_contributor" {
   principal_id         = module.aks.cluster_identity_principal_id
 }
 
-
 resource "azurerm_security_center_subscription_pricing" "containers" {
   tier          = "Standard"
   resource_type = "Containers"

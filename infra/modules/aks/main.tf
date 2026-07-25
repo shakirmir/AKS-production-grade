@@ -41,10 +41,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   }
 
-  ingress_application_gateway {
-    gateway_id = var.app_gateway_id
-  }
-
   tags = {
     environment = "practice"
   }
