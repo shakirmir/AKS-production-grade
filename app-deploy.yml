@@ -73,7 +73,7 @@ stages:
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
                       # Get Application Gateway public IP for smoke test
-                      APPGW_IP=$(az network application-gateway show -g $(resourceGroupName) -n $(aksClusterName)-agw --query "frontendIPConfigurations[0].publicIPAddress.id" -o tsv | xargs -I {} az network public-ip show --ids {} --query "ipAddress" -o tsv)
+                      APPGW_IP=$(az network application-gateway show -g $(resourceGroupName) -n aksprac-agw --query "frontendIPConfigurations[0].publicIPAddress.id" -o tsv | xargs -I {} az network public-ip show --ids {} --query "ipAddress" -o tsv)
                       # Wait for ingress to propagate
                       sleep 30
                       curl -fsS "http://$APPGW_IP/healthz"
