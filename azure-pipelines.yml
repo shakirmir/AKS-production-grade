@@ -16,13 +16,9 @@ stages:
     jobs:
       - job: Plan
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         steps:
           - checkout: self
-          - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-            displayName: Install Terraform
-            inputs:
-              terraformVersion: 'latest'
           - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnection)'
@@ -30,6 +26,14 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 set -euo pipefail
+                # install terraform via HashiCorp apt repository
+                sudo apt-get update -y
+                sudo apt-get install -y gnupg curl lsb-release
+                curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+                echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+                sudo apt-get update -y
+                sudo apt-get install -y terraform
+                terraform -version
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
                 terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -out=tfplan
@@ -41,16 +45,12 @@ stages:
       - deployment: Apply
         environment: infra-approval
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         strategy:
           runOnce:
             deploy:
               steps:
                 - checkout: self
-                - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-                  displayName: Install Terraform
-                  inputs:
-                    terraformVersion: '1.5.10'
                 - task: AzureCLI@2
                   inputs:
                     azureSubscription: '$(azureServiceConnection)'
@@ -58,6 +58,14 @@ stages:
                     scriptLocation: inlineScript
                     inlineScript: |
                       set -euo pipefail
+                      # install terraform via HashiCorp apt repository
+                      sudo apt-get update -y
+                      sudo apt-get install -y gnupg curl lsb-release
+                      curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+                      echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+                      sudo apt-get update -y
+                      sudo apt-get install -y terraform
+                      terraform -version
                       cd infra
                       terraform apply tfplan
 
@@ -66,7 +74,7 @@ stages:
     jobs:
       - job: BuildImage
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         steps:
           - checkout: self
           - task: AzureCLI@2
@@ -86,7 +94,7 @@ stages:
       - deployment: DeployUAT
         environment: uat-approval
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         strategy:
           runOnce:
             deploy:
@@ -108,7 +116,7 @@ stages:
       - deployment: DeployProdGreen
         environment: prod-approval
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         strategy:
           runOnce:
             deploy:
@@ -131,7 +139,7 @@ stages:
       - deployment: SwapToGreen
         environment: prod-swap-approval
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         strategy:
           runOnce:
             deploy:
