@@ -52,6 +52,8 @@ stages:
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # Apply network policy to allow LoadBalancer traffic
+                      kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
@@ -81,6 +83,8 @@ stages:
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # Apply network policy to allow LoadBalancer traffic
+                      kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
