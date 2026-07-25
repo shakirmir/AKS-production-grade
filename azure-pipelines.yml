@@ -37,6 +37,10 @@ stages:
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
                 terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -out=tfplan
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'infra/tfplan'
+              artifact: 'tfplan'
 
   - stage: TerraformApply
     dependsOn: TerraformPlan
@@ -51,6 +55,10 @@ stages:
             deploy:
               steps:
                 - checkout: self
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: 'tfplan'
+                    path: 'infra'
                 - task: AzureCLI@2
                   inputs:
                     azureSubscription: '$(azureServiceConnection)'
@@ -161,7 +169,7 @@ stages:
       - deployment: Rollback
         environment: prod-rollback
         pool:
-          vmImage: ubuntu-latest
+          vmImage: ubuntu-22.04
         strategy:
           runOnce:
             deploy:
