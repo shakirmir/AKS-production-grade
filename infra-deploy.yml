@@ -1,18 +1,12 @@
-trigger:
-  branches:
-    include:
-      - main
-
-pr:
-  branches:
-    include:
-      - main
+trigger: none
+pr: none
 
 variables:
   - group: aks-practice-vars
 
 stages:
   - stage: TerraformPlan
+    displayName: Terraform plan
     jobs:
       - job: Plan
         pool:
@@ -43,6 +37,7 @@ stages:
               artifact: 'tfplan'
 
   - stage: TerraformApply
+    displayName: Terraform apply
     dependsOn: TerraformPlan
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
