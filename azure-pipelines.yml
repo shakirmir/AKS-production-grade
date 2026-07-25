@@ -19,6 +19,10 @@ stages:
           vmImage: ubuntu-latest
         steps:
           - checkout: self
+          - task: TerraformInstaller@0
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: 'latest'
           - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnection)'
@@ -43,7 +47,11 @@ stages:
             deploy:
               steps:
                 - checkout: self
-                - task: AzureCLI@2
+                        - task: TerraformInstaller@0
+                          displayName: Install Terraform
+                          inputs:
+                            terraformVersion: '1.5.10'
+                        - task: AzureCLI@2
                   inputs:
                     azureSubscription: '$(azureServiceConnection)'
                     scriptType: bash
