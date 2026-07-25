@@ -3,6 +3,8 @@ version: blue
 image:
   repository: REPLACE_ME_ACR_LOGIN_SERVER/aks-practice-app
   tag: latest
+autoscaling:
+  enabled: false
 service:
   selectorVersion: blue
 secretProvider:
