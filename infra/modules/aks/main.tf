@@ -41,6 +41,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   }
 
+  ingress_application_gateway {
+    gateway_id = var.app_gateway_id
+  }
+
   tags = {
     environment = "practice"
   }
@@ -61,20 +65,6 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   node_count            = 1
   os_disk_size_gb       = 30
   mode                  = "User"
-}
-
-resource "azurerm_kubernetes_cluster_extension" "agic" {
-  name                       = "agic"
-  cluster_id                 = azurerm_kubernetes_cluster.aks.id
-  extension_type             = "microsoft.azureapplicationgateway-ingresscontroller"
-  version                    = "1.7.0"
-  configuration_settings = {
-    "appgw.subscriptionId" = var.subscription_id
-    "appgw.resourceGroup"  = var.resource_group_name
-    "appgw.name"           = "${var.name_prefix}-agw"
-    "appgw.subnetCIDR"     = var.app_gateway_subnet_cidr
-    "appgw.usePrivateIP"   = false
-  }
 }
 
 output "cluster_name" {
