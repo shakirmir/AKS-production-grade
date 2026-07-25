@@ -63,6 +63,20 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   mode                  = "User"
 }
 
+resource "azurerm_kubernetes_cluster_extension" "agic" {
+  name                       = "agic"
+  cluster_id                 = azurerm_kubernetes_cluster.aks.id
+  extension_type             = "microsoft.azureapplicationgateway-ingresscontroller"
+  version                    = "1.7.0"
+  configuration_settings = {
+    "appgw.subscriptionId" = var.subscription_id
+    "appgw.resourceGroup"  = var.resource_group_name
+    "appgw.name"           = "${var.name_prefix}-agw"
+    "appgw.subnetCIDR"     = var.app_gateway_subnet_cidr
+    "appgw.usePrivateIP"   = false
+  }
+}
+
 output "cluster_name" {
   value = azurerm_kubernetes_cluster.aks.name
 }
