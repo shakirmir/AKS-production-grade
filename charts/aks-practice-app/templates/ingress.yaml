@@ -5,13 +5,8 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: {{ .Values.ingress.tlsSecretName }}
   rules:
-    - host: {{ .Values.ingress.host }}
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

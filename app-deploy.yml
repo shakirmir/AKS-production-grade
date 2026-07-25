@@ -51,7 +51,7 @@ stages:
                       # Deploy NGINX ingress controller
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
-                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"=false
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
@@ -80,7 +80,7 @@ stages:
                       # Deploy NGINX ingress controller
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
-                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-internal"=false
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
                       helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
@@ -96,7 +96,10 @@ stages:
                       echo "=== NGINX Ingress Controller Status ==="
                       kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
                       echo "=== NGINX LoadBalancer Service Status ==="
-                      kubectl get svc ingress-nginx-controller -n ingress-nginx
+                      kubectl get svc ingress-nginx-controller -n ingress-nginx -o yaml
+                      echo "=== Testing direct NGINX pod access ==="
+                      NGINX_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].metadata.name}')
+                      kubectl exec -n ingress-nginx $NGINX_POD -- curl -s localhost:10245/healthz || echo "NGINX health endpoint not accessible"
                       echo "=== Ingress Resource Status ==="
                       kubectl get ingress aks-practice-app -n production -o yaml
                       echo "=== Service Endpoints ==="
@@ -114,7 +117,7 @@ stages:
                       # Retry health check with better error handling
                       for i in {1..5}; do
                         echo "Attempt $i: Testing health endpoint..."
-                        if curl -fsS "http://$INGRESS_IP/healthz" -H "Host: prod.example.internal" --max-time 10; then
+                        if curl -fsS "http://$INGRESS_IP/healthz" --max-time 10; then
                           echo "Health check passed!"
                           exit 0
                         fi
