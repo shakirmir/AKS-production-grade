@@ -17,15 +17,3 @@ variable "tenant_id" {
 variable "subscription_id" {
   type = string
 }
-
-variable "app_gateway_id" {
-  type = string
-}
-
-variable "app_gateway_subnet_id" {
-  type = string
-}
-
-variable "app_gateway_subnet_cidr" {
-  type = string
-}
