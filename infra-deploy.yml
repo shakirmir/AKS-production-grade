@@ -30,6 +30,9 @@ stages:
                 terraform -version
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
+                # Import existing AKS cluster if it exists
+                terraform import module.aks.azurerm_kubernetes_cluster.aks /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroupName)/providers/Microsoft.ContainerService/managedClusters/$(aksClusterName) || echo "Cluster import skipped"
+                terraform import module.aks.azurerm_kubernetes_cluster_node_pool.user /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroupName)/providers/Microsoft.ContainerService/managedClusters/$(aksClusterName)/agentPools/user || echo "Node pool import skipped"
                 terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -var="create_rbac_role_assignments=false" -out=tfplan
           - task: PublishPipelineArtifact@1
             inputs:
