@@ -70,6 +70,7 @@ resource "azurerm_application_gateway" "agw" {
     http_listener_name         = "httpListener"
     backend_address_pool_name  = "backendPool"
     backend_http_settings_name = "backendHttpSettings"
+    priority                   = 100
   }
 }
 
