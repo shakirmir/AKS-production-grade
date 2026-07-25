@@ -41,13 +41,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   }
 
-  addon_profile {
-    ingress_application_gateway {
-      enabled      = true
-      gateway_name = "${var.name_prefix}-agw"
-    }
-  }
-
   tags = {
     environment = "practice"
   }
