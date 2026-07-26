@@ -25,7 +25,8 @@ stages:
               inlineScript: |
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
-                terraform force-unlock $(lockId) -force
+                    echo "Force unlocking with Lock ID: $(lockId)"
+                    terraform force-unlock -force "$(lockId)"
           - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnection)'
