@@ -1,5 +1,7 @@
-trigger: none
-pr: none
+trigger: 
+  - main
+pr: 
+  - main
 
 variables:
   - group: aks-practice-vars
