@@ -16,6 +16,17 @@ stages:
         steps:
           - checkout: self
           - task: AzureCLI@2
+            displayName: 'Force Unlock Terraform State'
+            condition: eq(variables['forceUnlock'], 'true')
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                cd infra
+                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
+                terraform force-unlock $(lockId) -force
+          - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnection)'
               scriptType: bash
@@ -37,17 +48,6 @@ stages:
             inputs:
               targetPath: 'infra/tfplan'
               artifact: 'tfplan'
-          - task: AzureCLI@2
-            displayName: 'Force Unlock Terraform State'
-            condition: eq(variables['forceUnlock'], 'true')
-            inputs:
-              azureSubscription: '$(azureServiceConnection)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                cd infra
-                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
-                terraform force-unlock $(lockId) -force
 
   - stage: TerraformApply
     displayName: Terraform apply
