@@ -37,6 +37,16 @@ stages:
             inputs:
               targetPath: 'infra/tfplan'
               artifact: 'tfplan'
+    
+  - task: AzureCLI@2
+  displayName: 'Force Unlock Terraform State'
+  inputs:
+    azureSubscription: 'YOUR_SERVICE_CONNECTION'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      cd infra
+      terraform force-unlock 5b24a27d-6874-9dc7-8343-1762e831b008 -force
 
   - stage: TerraformApply
     displayName: Terraform apply
