@@ -46,6 +46,29 @@ The Azure DevOps infrastructure pipeline uses the same remote state key as the l
    - `prod-rollback`
 4. Configure approval checks in each environment via the Azure DevOps UI.
 
+5. Grant the Azure DevOps service principal permission to manage role assignments.
+    `Contributor` alone is not sufficient for Terraform resources such as ACR Pull and Key Vault workload identity assignments. An Owner or User Access Administrator must run:
+
+```bash
+MSYS_NO_PATHCONV=1 az role assignment create \
+   --assignee-object-id <azure-devops-service-principal-object-id> \
+   --assignee-principal-type ServicePrincipal \
+   --role "User Access Administrator" \
+   --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>"
+```
+
+Verify the permission:
+
+```bash
+MSYS_NO_PATHCONV=1 az role assignment list \
+   --assignee-object-id <azure-devops-service-principal-object-id> \
+   --include-inherited \
+   --query "[].{Role:roleDefinitionName,Scope:scope}" \
+   -o table
+```
+
+The output must include `User Access Administrator` at the project resource-group scope or an inherited subscription scope. `MSYS_NO_PATHCONV=1` prevents Git Bash from converting the Azure resource ID into a Windows path.
+
 Before the first `terraform apply`, import the subscription-level Containers pricing resource if it already exists:
 
 ```bash
