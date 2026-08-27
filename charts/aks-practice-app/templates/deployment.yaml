@@ -21,6 +21,7 @@ spec:
       labels:
         app: {{ .Release.Name }}
         version: {{ .Values.version }}
+        azure.workload.identity/use: "true"
     spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
@@ -51,3 +52,18 @@ spec:
             limits:
               cpu: 250m
               memory: 256Mi
+          {{ if .Values.secretProvider.enabled }}
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: /mnt/secrets-store
+              readOnly: true
+            {{ end }}
+          {{ if .Values.secretProvider.enabled }}
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-spc
+      {{ end }}

@@ -8,7 +8,7 @@ Before starting, confirm the following:
 - An active Azure subscription is available.
 - Azure CLI is installed and authenticated with `az login`.
 - An Azure DevOps organization and project already exist.
-- You have permission to create resource groups, AKS, ACR, Key Vault, Application Gateway, Policy assignments, and Defender for Cloud settings.
+   - You have permission to create resource groups, AKS, ACR, Key Vault, monitoring, Policy assignments, and Defender for Cloud settings.
 - You have a tenant ID and subscription ID available.
 
 ## 2. Azure Bootstrap
@@ -45,7 +45,7 @@ Before starting, confirm the following:
    - `location`
    - `name_prefix`
 3. Review the Terraform modules in `infra/`:
-   - `modules/aks` for AKS, monitoring, Azure CNI, and AGIC integration
+   - `modules/aks` for AKS, monitoring, Azure CNI, and workload identity integration
    - `modules/acr` for the registry
    - `modules/keyvault` for the vault and access policy
    - `modules/appgateway` for the gateway and public IP
@@ -78,7 +78,7 @@ Before starting, confirm the following:
    - `kubectl create namespace uat`
    - `kubectl create namespace production`
 3. Ensure the cluster has the necessary RBAC and identity prerequisites for workload identity and Key Vault CSI access.
-4. Confirm the Application Gateway Ingress Controller is healthy in the cluster.
+4. Confirm the NGINX ingress controller and its Azure LoadBalancer service are healthy in the cluster.
 
 ## 6. Helm Deployment
 
@@ -98,7 +98,7 @@ Before starting, confirm the following:
 
 ## 7. Azure DevOps Pipeline Flow
 
-The pipeline in `azure-pipelines.yml` is structured to run:
+The application pipeline in `app-deploy.yml` is structured to run:
 1. Terraform plan on every push.
 2. Terraform apply after approval in the `infra-approval` environment.
 3. Build and push the container image.
@@ -125,7 +125,7 @@ Confirm each of the following:
 - AKS cluster is healthy and shows nodes.
 - ACR contains the pushed image.
 - Pods are running in both namespaces.
-- Ingress is creating routing entries through Application Gateway.
+- Ingress is creating routing entries through NGINX.
 - Health checks and service endpoints behave as expected.
 - Azure Policy and Defender for Cloud findings can be reviewed.
 
@@ -133,4 +133,4 @@ Confirm each of the following:
 
 When the practice session is complete and the environment is no longer needed:
 - Run `./destroy-infra.sh`
-- Confirm the AKS cluster, Application Gateway, and related resources are removed.
+- Confirm the AKS cluster, LoadBalancer, and related resources are removed.

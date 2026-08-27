@@ -4,21 +4,21 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name         = var.resource_group_name
   tenant_id                   = var.tenant_id
   sku_name                    = "standard"
+  rbac_authorization_enabled  = true
   purge_protection_enabled    = false
   soft_delete_retention_days = 7
-}
-
-resource "azurerm_key_vault_access_policy" "owner" {
-  key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = var.tenant_id
-  object_id    = var.object_id
-
-  key_permissions = ["Get", "List", "Create", "Delete", "Update", "Import", "Recover", "Backup", "Restore"]
-  secret_permissions = ["Get", "List", "Set", "Delete", "Recover", "Backup", "Restore"]
 }
 
 resource "random_string" "suffix" {
   length  = 6
   upper   = false
   special = false
+}
+
+output "vault_id" {
+  value = azurerm_key_vault.kv.id
+}
+
+output "vault_name" {
+  value = azurerm_key_vault.kv.name
 }

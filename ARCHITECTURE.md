@@ -28,9 +28,9 @@ flowchart LR
     NSUAT --> APPUAT[Helm Release: uat]
     NSPROD --> APPPROD[Helm Release: production]
 
-    APPPROD --> SVC[Service]
-    SVC --> ING[Ingress via NGINX]
-    ING --> LB[Azure Load Balancer]
+    APPPROD --> SVC[ClusterIP Service]
+    SVC --> ING[NGINX Ingress Controller]
+    ING --> LB[Azure LoadBalancer Service]
 
     APPUAT --> MON[Azure Monitor / Container Insights]
     APPPROD --> MON
@@ -40,8 +40,8 @@ flowchart LR
 
 1. A developer pushes changes to the repository.
 2. Azure DevOps runs Terraform plan and apply through approval gates.
-3. Terraform provisions AKS, ACR, Key Vault, Policy, and Defender settings.
+3. Terraform provisions AKS, ACR, Key Vault, workload identity, monitoring, Policy, and Defender settings.
 4. The pipeline builds and pushes the application image to ACR.
 5. Helm deploys NGINX ingress controller and the app into UAT and production namespaces on AKS.
-6. Azure Load Balancer, through NGINX ingress controller, routes traffic to the workload.
+6. The Azure Standard Load Balancer exposes NGINX, which routes traffic to the ClusterIP Service and workload.
 7. Azure Monitor and Defender provide operational and security visibility.

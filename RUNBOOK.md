@@ -18,4 +18,8 @@
    - ./scripts/swap.sh production green
    - ./scripts/rollback.sh production
 5. Run one scenario script, diagnose it, then fix it.
-6. Tear down at the end of the session if needed: ./destroy-infra.sh.
+6. Capture evidence after each deployment or release exercise:
+   - `./scripts/capture-evidence.sh production`
+   - Review generated files and remove secrets before committing evidence.
+7. Review monitoring in Azure Monitor and Log Analytics using the queries in `README.md`.
+8. Tear down at the end of the session if needed: `./destroy-infra.sh`.

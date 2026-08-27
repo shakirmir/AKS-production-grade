@@ -48,7 +48,7 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
-                      # Deploy NGINX ingress controller
+                      # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
@@ -79,7 +79,7 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
-                      # Deploy NGINX ingress controller
+                      # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace

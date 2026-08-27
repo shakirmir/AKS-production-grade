@@ -21,7 +21,13 @@ variable "name_prefix" {
 }
 
 variable "create_rbac_role_assignments" {
-  description = "Create RBAC role assignments for the AKS kubelet identity and Application Gateway identity. Set to true only when the deploying principal has User Access Administrator or Owner permissions."
+  description = "Create the ACR pull and Key Vault workload identity role assignments. Set to true only when the deploying principal has User Access Administrator or Owner permissions."
   type        = bool
-  default     = false
+  default     = true
+}
+
+variable "alert_email" {
+  description = "Optional email address for AKS monitoring alerts. Leave null to provision monitoring without notifications."
+  type        = string
+  default     = null
 }

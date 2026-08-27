@@ -6,10 +6,8 @@ image:
 service:
   selectorVersion: blue
 secretProvider:
-  enabled: false
-  tenantId: REPLACE_ME_TENANT_ID
-  keyVaultName: REPLACE_ME_KEY_VAULT_NAME
-  secretName: tls-cert
+  enabled: true
+  workloadIdentityClientId: REPLACE_ME_WORKLOAD_IDENTITY_CLIENT_ID
   tenantId: REPLACE_ME_TENANT_ID
   keyVaultName: REPLACE_ME_KEY_VAULT_NAME
   secretName: tls-cert

@@ -8,7 +8,8 @@ autoscaling:
 service:
   selectorVersion: blue
 secretProvider:
-  enabled: false
+  enabled: true
+  workloadIdentityClientId: REPLACE_ME_WORKLOAD_IDENTITY_CLIENT_ID
   tenantId: c7d7fabe-6c6d-4fe6-85dc-141d6a150cec
   keyVaultName: aksprackvsuc3yj
   secretName: tls-cert
