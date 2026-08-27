@@ -75,6 +75,7 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
    - `terraform plan -out=tfplan`
 5. Apply:
    - `terraform apply tfplan`
+   - Confirm the AKS Key Vault Secrets Provider addon is enabled; it installs the `SecretProviderClass` CRD required by the Helm chart.
 6. Capture outputs:
    - AKS cluster name
    - ACR login server
@@ -98,6 +99,7 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
    - `kubectl create namespace uat`
    - `kubectl create namespace production`
 3. Ensure the cluster has the necessary RBAC and identity prerequisites for workload identity and Key Vault CSI access.
+   - `kubectl get crd secretproviderclasses.secrets-store.csi.x-k8s.io`
 4. Confirm the NGINX ingress controller and its Azure LoadBalancer service are healthy in the cluster.
 
 ## 6. Helm Deployment

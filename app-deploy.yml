@@ -52,6 +52,8 @@ stages:
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # The AKS Key Vault Secrets Provider addon supplies this CRD.
+                      kubectl wait --for=condition=established crd/secretproviderclasses.secrets-store.csi.x-k8s.io --timeout=180s
                       # Apply network policy to allow LoadBalancer traffic
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
@@ -83,6 +85,8 @@ stages:
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
                       helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # The AKS Key Vault Secrets Provider addon supplies this CRD.
+                      kubectl wait --for=condition=established crd/secretproviderclasses.secrets-store.csi.x-k8s.io --timeout=180s
                       # Apply network policy to allow LoadBalancer traffic
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
