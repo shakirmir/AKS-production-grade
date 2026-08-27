@@ -49,7 +49,12 @@ stages:
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
                       # Ensure the AKS addon that installs SecretProviderClass is enabled before Helm.
-                      az aks enable-addons --addons azure-keyvault-secrets-provider --name $(aksClusterName) --resource-group $(resourceGroupName)
+                      KEYVAULT_ADDON=$(az aks show --name $(aksClusterName) --resource-group $(resourceGroupName) --query "addonProfiles.azureKeyvaultSecretsProvider.enabled" -o tsv)
+                      if [[ "$KEYVAULT_ADDON" != "true" ]]; then
+                        az aks enable-addons --addons azure-keyvault-secrets-provider --name $(aksClusterName) --resource-group $(resourceGroupName)
+                      else
+                        echo "Azure Key Vault Secrets Provider addon is already enabled."
+                      fi
                       # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
@@ -84,7 +89,12 @@ stages:
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
                       # Ensure the AKS addon that installs SecretProviderClass is enabled before Helm.
-                      az aks enable-addons --addons azure-keyvault-secrets-provider --name $(aksClusterName) --resource-group $(resourceGroupName)
+                      KEYVAULT_ADDON=$(az aks show --name $(aksClusterName) --resource-group $(resourceGroupName) --query "addonProfiles.azureKeyvaultSecretsProvider.enabled" -o tsv)
+                      if [[ "$KEYVAULT_ADDON" != "true" ]]; then
+                        az aks enable-addons --addons azure-keyvault-secrets-provider --name $(aksClusterName) --resource-group $(resourceGroupName)
+                      else
+                        echo "Azure Key Vault Secrets Provider addon is already enabled."
+                      fi
                       # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
