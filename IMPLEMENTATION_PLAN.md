@@ -142,7 +142,7 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
    - tenant ID
    - Key Vault name
    - Entra ID group object ID
-   - workload identity client ID
+   - workload identity client ID (the pipeline injects the current value automatically)
 3. Create the CSI secret before deploying the chart:
    - `az keyvault secret set --vault-name <key-vault-name> --name tls-cert --value <practice-secret-value>`
 4. Deploy to UAT:

@@ -54,7 +54,7 @@ helm upgrade --install aks-practice-app ./charts/aks-practice-app \
   --set secretProvider.workloadIdentityClientId=<workload-identity-client-id>
 ```
 
-The Key Vault secret named `tls-cert` must exist before the CSI volume can mount. The example uses a mounted file at `/mnt/secrets-store`; it does not copy the secret into a Kubernetes Secret. The application pipeline discovers the current Key Vault and workload identity values from the resource group at deployment time.
+The Key Vault secret named `tls-cert` must exist before the CSI volume can mount. The example uses a mounted file at `/mnt/secrets-store`; it does not copy the secret into a Kubernetes Secret. The application pipeline discovers the current Key Vault and workload identity values from the resource group and injects the tenant ID at deployment time.
 
 Terraform enables the AKS Key Vault Secrets Provider addon with secret rotation. The application pipeline also enables the addon idempotently and waits for the `SecretProviderClass` CRD before installing the chart. If the cluster predates this setting, the pipeline can enable it before deployment.
 

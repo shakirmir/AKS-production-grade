@@ -69,7 +69,7 @@ stages:
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
-                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.tenantId="$(tenantId)" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
 
   - stage: DeployProdGreen
     displayName: Deploy green to production
@@ -113,7 +113,7 @@ stages:
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
-                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.tenantId="$(tenantId)" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
                       # Wait for pods to be ready
                       kubectl wait --for=condition=ready pod -l app=aks-practice-app,version=green -n production --timeout=300s
                       # Diagnostic checks
