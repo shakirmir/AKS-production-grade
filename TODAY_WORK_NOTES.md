@@ -23,6 +23,11 @@
  - Added/updated Terraform outputs used by pipelines (ACR login server, AKS identities)
  - Verified Helm chart deploys to AKS after the above fixes (Ingress resource created but AG backend not yet populated)
  - Confirmed AGIC is not part of this deployment; Application Gateway remains a documented alternative only.
+ - Fixed NGINX ingress reachability:
+    - Allowed app traffic from the `ingress-nginx` namespace in the chart NetworkPolicy; the previous policy allowed only `kube-system`, preventing NGINX from reaching the app.
+    - Configured the NGINX Helm release with `controller.service.externalTrafficPolicy=Local` in both UAT and production pipeline stages. This prevents Azure from depending on NGINX's host-dependent default route for health checks.
+    - Recreated the NGINX LoadBalancer service after an unhealthy external route. Azure assigned a new external IP (`20.253.96.109`) and the production health endpoint returned HTTP 200.
+    - Documented DNS, in-cluster ingress, and public LoadBalancer validation steps in `RUNBOOK.md`.
 
 ## Key observations
 - The pipeline now successfully installs Terraform and initializes all provider plugins

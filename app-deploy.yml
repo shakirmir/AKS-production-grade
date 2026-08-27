@@ -62,7 +62,9 @@ stages:
                       # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
-                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # Local traffic policy gives Azure Load Balancer a kube-proxy health
+                      # check port, rather than probing NGINX's host-dependent default route.
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.externalTrafficPolicy=Local
                       # The AKS Key Vault Secrets Provider addon supplies this CRD.
                       kubectl wait --for=condition=established crd/secretproviderclasses.secrets-store.csi.x-k8s.io --timeout=180s
                       # Apply network policy to allow LoadBalancer traffic
@@ -106,7 +108,9 @@ stages:
                       # Deploy the selected ingress architecture: NGINX plus Azure LoadBalancer
                       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
                       helm repo update
-                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+                      # Local traffic policy gives Azure Load Balancer a kube-proxy health
+                      # check port, rather than probing NGINX's host-dependent default route.
+                      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace --set controller.service.externalTrafficPolicy=Local
                       # The AKS Key Vault Secrets Provider addon supplies this CRD.
                       kubectl wait --for=condition=established crd/secretproviderclasses.secrets-store.csi.x-k8s.io --timeout=180s
                       # Apply network policy to allow LoadBalancer traffic
