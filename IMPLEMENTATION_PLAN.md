@@ -36,6 +36,8 @@ Before starting, confirm the following:
    - `resourceGroupName`
    - `aksClusterName`
 
+The Azure DevOps infrastructure pipeline uses the same remote state key as the laptop deployment: `terraform.tfstate`. Do not change this key unless you first migrate the existing state with `terraform state`/backend procedures.
+
 3. Create Azure DevOps environments:
    - `infra-approval`
    - `uat-approval`
@@ -100,6 +102,10 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
    - `kubectl create namespace production`
 3. Ensure the cluster has the necessary RBAC and identity prerequisites for workload identity and Key Vault CSI access.
    - `kubectl get crd secretproviderclasses.secrets-store.csi.x-k8s.io`
+   - Create the secret referenced by the chart before deploying:
+     - `az keyvault secret set --vault-name <key-vault-name> --name tls-cert --value <practice-secret-value>`
+     - For this environment: `az keyvault secret set --vault-name aksprackvznpmxf --name tls-cert --value practice-tls-secret`
+   - Use a real certificate or protected value for a non-practice environment; do not commit secret values to Git.
 4. Confirm the NGINX ingress controller and its Azure LoadBalancer service are healthy in the cluster.
    - The application pipeline also enables `azure-keyvault-secrets-provider` idempotently before Helm and waits for the `SecretProviderClass` CRD.
 

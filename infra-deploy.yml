@@ -5,6 +5,8 @@ pr:
 
 variables:
   - group: aks-practice-vars
+  - name: terraformStateKey
+    value: terraform.tfstate
 
 stages:
   - stage: TerraformPlan
@@ -25,8 +27,8 @@ stages:
               inlineScript: |
                 set -euo pipefail
                 cd infra
-                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
-                STATE_BLOB="$(Build.Repository.Name).tfstate"
+                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(terraformStateKey)"
+                STATE_BLOB="$(terraformStateKey)"
                 LOCK_ID="$(lockId)"
                 ACTUAL_LOCK_ID=$(az storage blob metadata show --account-name "$(backendStorageAccount)" --container-name "$(backendContainer)" --name "$STATE_BLOB" --auth-mode login --query "terraformlockid" -o tsv 2>/dev/null || true)
                 if [[ -z "$ACTUAL_LOCK_ID" ]]; then
@@ -55,7 +57,7 @@ stages:
                 sudo apt-get install -y terraform
                 terraform -version
                 cd infra
-                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
+                terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(terraformStateKey)"
                 terraform plan -var="subscription_id=$(subscriptionId)" -var="tenant_id=$(tenantId)" -var="create_rbac_role_assignments=true" -out=tfplan
           - task: PublishPipelineArtifact@1
             inputs:
@@ -96,5 +98,5 @@ stages:
                       sudo apt-get install -y terraform
                       terraform -version
                       cd infra
-                      terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
+                      terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(terraformStateKey)"
                       terraform apply tfplan
