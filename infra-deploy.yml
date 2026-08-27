@@ -17,16 +17,28 @@ stages:
           - checkout: self
           - task: AzureCLI@2
             displayName: 'Force Unlock Terraform State'
-            condition: eq(variables['forceUnlock'], 'true')
+            condition: and(succeeded(), eq(variables['forceUnlock'], 'true'), ne(variables['lockId'], ''))
             inputs:
               azureSubscription: '$(azureServiceConnection)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                set -euo pipefail
                 cd infra
                 terraform init -backend-config="resource_group_name=$(backendResourceGroup)" -backend-config="storage_account_name=$(backendStorageAccount)" -backend-config="container_name=$(backendContainer)" -backend-config="key=$(Build.Repository.Name).tfstate"
-                    echo "Force unlocking with Lock ID: $(lockId)"
-                    terraform force-unlock -force "$(lockId)"
+                STATE_BLOB="$(Build.Repository.Name).tfstate"
+                LOCK_ID="$(lockId)"
+                ACTUAL_LOCK_ID=$(az storage blob metadata show --account-name "$(backendStorageAccount)" --container-name "$(backendContainer)" --name "$STATE_BLOB" --auth-mode login --query "terraformlockid" -o tsv 2>/dev/null || true)
+                if [[ -z "$ACTUAL_LOCK_ID" ]]; then
+                  echo "No Terraform lock metadata found on $STATE_BLOB; skipping force-unlock."
+                  exit 0
+                fi
+                if [[ "$ACTUAL_LOCK_ID" != "$LOCK_ID" ]]; then
+                  echo "Refusing to unlock: requested lock $LOCK_ID does not match backend lock $ACTUAL_LOCK_ID."
+                  exit 1
+                fi
+                echo "Force unlocking verified stale lock: $ACTUAL_LOCK_ID"
+                terraform force-unlock -force "$ACTUAL_LOCK_ID"
           - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnection)'

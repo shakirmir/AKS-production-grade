@@ -53,6 +53,8 @@ terraform import azurerm_security_center_subscription_pricing.containers "/subsc
 
 This is a one-time import into the remote Terraform state. Do not create a second Defender pricing resource.
 
+Do not enable the pipeline `forceUnlock` variable during normal runs. The force-unlock step now checks the state blob metadata and only unlocks when the requested lock ID matches the current backend lock. If no lock metadata exists, it safely skips the operation.
+
 ## 3. Terraform Infrastructure
 
 1. Copy the example file:
