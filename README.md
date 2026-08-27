@@ -56,7 +56,7 @@ helm upgrade --install aks-practice-app ./charts/aks-practice-app \
 
 The Key Vault secret named `tls-cert` must exist before the CSI volume can mount. The example uses a mounted file at `/mnt/secrets-store`; it does not copy the secret into a Kubernetes Secret.
 
-Terraform enables the AKS Key Vault Secrets Provider addon with secret rotation. The application pipeline waits for the `SecretProviderClass` CRD before installing the chart. If the cluster predates this setting, run `terraform apply` once before rerunning the application pipeline.
+Terraform enables the AKS Key Vault Secrets Provider addon with secret rotation. The application pipeline also enables the addon idempotently and waits for the `SecretProviderClass` CRD before installing the chart. If the cluster predates this setting, the pipeline can enable it before deployment.
 
 ## Deployment Exercises
 

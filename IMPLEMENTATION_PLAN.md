@@ -101,6 +101,7 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
 3. Ensure the cluster has the necessary RBAC and identity prerequisites for workload identity and Key Vault CSI access.
    - `kubectl get crd secretproviderclasses.secrets-store.csi.x-k8s.io`
 4. Confirm the NGINX ingress controller and its Azure LoadBalancer service are healthy in the cluster.
+   - The application pipeline also enables `azure-keyvault-secrets-provider` idempotently before Helm and waits for the `SecretProviderClass` CRD.
 
 ## 6. Helm Deployment
 
