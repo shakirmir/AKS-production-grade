@@ -121,4 +121,4 @@ The Key Vault CSI path uses AKS OIDC workload identity and a user-assigned manag
 
 Scenario scripts and diagnosis guides are in [scenarios](scenarios). Important checks include `kubectl describe`, `kubectl logs`, `kubectl top`, `kubectl auth can-i`, service endpoints, Ingress status, Azure Monitor metrics, and Log Analytics queries.
 
-Destroy the practice environment with `./destroy-infra.sh` when it is not needed.
+Destroy the practice environment with `./destroy-infra.sh` when it is not needed. Set `SUBSCRIPTION_ID`, `TENANT_ID`, and `BACKEND_STORAGE_ACCOUNT` first; the script destroys project resources but preserves the remote-state backend. The AzureRM provider is configured to allow this explicit Terraform destroy to remove nested resources in the project resource group.
