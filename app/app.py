@@ -9,7 +9,7 @@ def index():
     version = os.getenv("VERSION", "blue")
     if os.getenv("BROKEN_ROOT", "false").lower() == "true":
         return jsonify({"error": "root endpoint intentionally broken"}), 500
-    return jsonify({"service": "aks-practice-app-uat", "version": version, "hostname": socket.gethostname()})
+    return jsonify({"service": "aks-practice-app-uat-shakir", "version": version, "hostname": socket.gethostname()})
 
 @app.get("/healthz")
 def healthz():
