@@ -61,7 +61,6 @@ resource "azurerm_role_assignment" "key_vault_secrets_user" {
 
 resource "azurerm_federated_identity_credential" "uat" {
   name                = "${var.name_prefix}-uat-workload"
-  resource_group_name = var.resource_group_name
   parent_id           = azurerm_user_assigned_identity.workload.id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = azurerm_kubernetes_cluster.aks.oidc_issuer_url
@@ -70,7 +69,6 @@ resource "azurerm_federated_identity_credential" "uat" {
 
 resource "azurerm_federated_identity_credential" "production" {
   name                = "${var.name_prefix}-production-workload"
-  resource_group_name = var.resource_group_name
   parent_id           = azurerm_user_assigned_identity.workload.id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = azurerm_kubernetes_cluster.aks.oidc_issuer_url

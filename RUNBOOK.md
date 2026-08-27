@@ -5,6 +5,9 @@
 1. Provision or reuse the infra:
    - Copy infra/terraform.tfvars.example to infra/terraform.tfvars and fill in your Azure subscription and tenant IDs.
    - Run ./bootstrap-backend.sh once to create the Azure Storage Account backend.
+   - Export `SUBSCRIPTION_ID` and `TENANT_ID` from your Azure account.
+   - Export the backend values printed by the bootstrap script, especially `BACKEND_STORAGE_ACCOUNT`.
+   - Example: `export BACKEND_STORAGE_ACCOUNT=<storage-account-name>`
    - Run ./deploy-infra.sh.
 2. Build and push the app:
    - az acr login --name <acr-name>

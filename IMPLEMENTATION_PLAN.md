@@ -16,17 +16,26 @@ Before starting, confirm the following:
 1. Create the Terraform backend storage account:
    - Run `./bootstrap-backend.sh`.
    - Capture the storage account name, resource group, and container name.
+   - In Git Bash, export the captured values before running `./deploy-infra.sh`:
+       - `export SUBSCRIPTION_ID=<subscription-id> TENANT_ID=<tenant-id>`
+     - `export BACKEND_RESOURCE_GROUP=aks-practice-backend-rg`
+     - `export BACKEND_STORAGE_ACCOUNT=<storage-account-name>`
+     - `export BACKEND_CONTAINER=tfstate`
 2. Create a variable group in Azure DevOps named `aks-practice-vars` with these values:
+   Update the backend details:
+
    - `azureServiceConnection`
    - `subscriptionId`
    - `tenantId`
+   - `backendResourceGroup`
+   - `backendStorageAccount`
+   - `backendContainer`
+
    - `acrName`
    - `acrLoginServer`
    - `resourceGroupName`
    - `aksClusterName`
-   - `backendResourceGroup`
-   - `backendStorageAccount`
-   - `backendContainer`
+
 3. Create Azure DevOps environments:
    - `infra-approval`
    - `uat-approval`
@@ -34,6 +43,15 @@ Before starting, confirm the following:
    - `prod-swap-approval`
    - `prod-rollback`
 4. Configure approval checks in each environment via the Azure DevOps UI.
+
+Before the first `terraform apply`, import the subscription-level Containers pricing resource if it already exists:
+
+```bash
+cd infra
+terraform import azurerm_security_center_subscription_pricing.containers "/subscriptions/<subscription-id>/providers/Microsoft.Security/pricings/Containers"
+```
+
+This is a one-time import into the remote Terraform state. Do not create a second Defender pricing resource.
 
 ## 3. Terraform Infrastructure
 
