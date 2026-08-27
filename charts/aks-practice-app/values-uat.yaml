@@ -9,9 +9,9 @@ service:
   selectorVersion: blue
 secretProvider:
   enabled: true
-  workloadIdentityClientId: REPLACE_ME_WORKLOAD_IDENTITY_CLIENT_ID
+  workloadIdentityClientId: 73a41c4c-1354-4b44-817c-44a2e13bce9f
   tenantId: c7d7fabe-6c6d-4fe6-85dc-141d6a150cec
-  keyVaultName: aksprackvsuc3yj
+  keyVaultName: aksprackvznpmxf
   secretName: tls-cert
 ingress:
   enabled: true

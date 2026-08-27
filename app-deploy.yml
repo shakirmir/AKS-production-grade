@@ -48,6 +48,10 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      KEY_VAULT_NAME=$(az keyvault list --resource-group $(resourceGroupName) --query "[0].name" -o tsv)
+                      WORKLOAD_IDENTITY_CLIENT_ID=$(az identity list --resource-group $(resourceGroupName) --query "[?contains(name, 'workload-id')].clientId | [0]" -o tsv)
+                      test -n "$KEY_VAULT_NAME"
+                      test -n "$WORKLOAD_IDENTITY_CLIENT_ID"
                       # Ensure the AKS addon that installs SecretProviderClass is enabled before Helm.
                       KEYVAULT_ADDON=$(az aks show --name $(aksClusterName) --resource-group $(resourceGroupName) --query "addonProfiles.azureKeyvaultSecretsProvider.enabled" -o tsv)
                       if [[ "$KEYVAULT_ADDON" != "true" ]]; then
@@ -65,7 +69,7 @@ stages:
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
-                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
 
   - stage: DeployProdGreen
     displayName: Deploy green to production
@@ -88,6 +92,10 @@ stages:
                     inlineScript: |
                       set -euo pipefail
                       az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName) --overwrite-existing
+                      KEY_VAULT_NAME=$(az keyvault list --resource-group $(resourceGroupName) --query "[0].name" -o tsv)
+                      WORKLOAD_IDENTITY_CLIENT_ID=$(az identity list --resource-group $(resourceGroupName) --query "[?contains(name, 'workload-id')].clientId | [0]" -o tsv)
+                      test -n "$KEY_VAULT_NAME"
+                      test -n "$WORKLOAD_IDENTITY_CLIENT_ID"
                       # Ensure the AKS addon that installs SecretProviderClass is enabled before Helm.
                       KEYVAULT_ADDON=$(az aks show --name $(aksClusterName) --resource-group $(resourceGroupName) --query "addonProfiles.azureKeyvaultSecretsProvider.enabled" -o tsv)
                       if [[ "$KEYVAULT_ADDON" != "true" ]]; then
@@ -105,7 +113,7 @@ stages:
                       kubectl apply -f manifests/network-policy.yaml
                       # Wait for NGINX ingress controller to be ready
                       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx --timeout=300s
-                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app
+                      helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=green --set service.selectorVersion=green --set image.tag=$(Build.BuildId) --set image.repository=$(acrLoginServer)/aks-practice-app --set secretProvider.keyVaultName="$KEY_VAULT_NAME" --set secretProvider.workloadIdentityClientId="$WORKLOAD_IDENTITY_CLIENT_ID"
                       # Wait for pods to be ready
                       kubectl wait --for=condition=ready pod -l app=aks-practice-app,version=green -n production --timeout=300s
                       # Diagnostic checks

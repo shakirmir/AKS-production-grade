@@ -113,11 +113,14 @@ Do not enable the pipeline `forceUnlock` variable during normal runs. The force-
    - tenant ID
    - Key Vault name
    - Entra ID group object ID
-3. Deploy to UAT:
+   - workload identity client ID
+3. Create the CSI secret before deploying the chart:
+   - `az keyvault secret set --vault-name <key-vault-name> --name tls-cert --value <practice-secret-value>`
+4. Deploy to UAT:
    - `helm upgrade --install aks-practice-app ./charts/aks-practice-app -n uat --create-namespace -f charts/aks-practice-app/values-uat.yaml`
-4. Deploy blue to production:
+5. Deploy blue to production:
    - `helm upgrade --install aks-practice-app ./charts/aks-practice-app -n production --create-namespace -f charts/aks-practice-app/values-production.yaml --set version=blue --set service.selectorVersion=blue`
-5. Validate pods, service, ingress, and endpoints.
+6. Validate pods, service, ingress, and endpoints.
 
 ## 7. Azure DevOps Pipeline Flow
 
